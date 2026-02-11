@@ -4,6 +4,4 @@ node_modules
 dist
 !.env.example
 build
-
-
-
+/src/generated

@@ -1,0 +1,19 @@
+// USER ENUMS:
+
+enum Role {
+    SUPER_ADMIN
+    ADMIN
+    DOCTOR
+    PATIENT
+}
+
+enum UserStatus {
+    BLOCKED
+    ACTIVE
+    DELETED
+}
+
+enum Gender {
+    MALE
+    FEMALE
+}
