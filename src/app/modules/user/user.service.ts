@@ -2,7 +2,11 @@ import status from "http-status";
 import { Role, Specialty } from "../../../generated/prisma/client";
 import { AppError } from "../../error/AppError";
 import { prisma } from "../../lib/prisma";
-import { ICreateDoctorPayload } from "./user.interface";
+import {
+  ICreateAdminPayload,
+  ICreateDoctorPayload,
+  ICreateSuperAdminPayload,
+} from "./user.interface";
 import { auth } from "../../lib/auth";
 
 const createDoctorInDB = async (payload: ICreateDoctorPayload) => {
@@ -124,6 +128,100 @@ const createDoctorInDB = async (payload: ICreateDoctorPayload) => {
   }
 };
 
+const createAdminInDB = async (payload: ICreateAdminPayload) => {
+  // 1. Check if user already exists in the database
+  const userExists = await prisma.user.findUnique({
+    where: { email: payload.admin.email },
+  });
+
+  if (userExists) {
+    throw new AppError(status.CONFLICT, "User with this email already exists");
+  }
+
+  // 2. Register User in Better-Auth
+  const userData = await auth.api.signUpEmail({
+    body: {
+      name: payload.admin.name,
+      email: payload.admin.email,
+      password: payload.password,
+      role: Role.ADMIN,
+      needPasswordChange: true,
+    },
+  });
+
+  try {
+    // 3. Create Admin profile in a transaction
+    return await prisma.$transaction(async (tx) => {
+      const adminData = await tx.admin.create({
+        data: {
+          userId: userData.user.id,
+          ...payload.admin,
+        },
+      });
+
+      // 4. Return the complete profile including User data
+      return await tx.admin.findUnique({
+        where: { id: adminData.id },
+        include: { user: true },
+      });
+    });
+  } catch (_error) {
+    // 5. Manual Rollback: Delete the User from Better-Auth if profile creation fails
+    await prisma.user.delete({
+      where: { id: userData.user.id },
+    });
+    throw new AppError(
+      status.BAD_REQUEST,
+      "Failed to create Admin profile, rolling back user registration.",
+    );
+  }
+};
+
+const createSuperAdminInDB = async (payload: ICreateSuperAdminPayload) => {
+  const userExists = await prisma.user.findUnique({
+    where: { email: payload.superAdmin.email },
+  });
+
+  if (userExists) {
+    throw new AppError(status.CONFLICT, "User with this email already exists");
+  }
+
+  const userData = await auth.api.signUpEmail({
+    body: {
+      name: payload.superAdmin.name,
+      email: payload.superAdmin.email,
+      password: payload.password,
+      role: Role.SUPER_ADMIN, // Set as SUPER_ADMIN
+      needPasswordChange: true,
+    },
+  });
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      // Use the 'admin' table for the profile data
+      const superAdminData = await tx.admin.create({
+        data: {
+          userId: userData.user.id,
+          ...payload.superAdmin,
+        },
+      });
+
+      return await tx.admin.findUnique({
+        where: { id: superAdminData.id },
+        include: { user: true },
+      });
+    });
+  } catch (_error) {
+    await prisma.user.delete({ where: { id: userData.user.id } });
+    throw new AppError(
+      status.BAD_REQUEST,
+      "Failed to create Super Admin profile",
+    );
+  }
+};
+
 export const userService = {
   createDoctorInDB,
+  createAdminInDB,
+  createSuperAdminInDB,
 };

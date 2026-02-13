@@ -37,6 +37,43 @@ const createDoctorSchema = z.object({
   }),
 });
 
+// Schema for Creating an Admin
+const createAdminSchema = z.object({
+  body: z.object({
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    admin: z
+      .object({
+        name: z.string("Name is required"),
+        email: z.email("A valid email address is required"),
+        contactNumber: z
+          .string()
+          .length(11, "Contact number must be 11 digits"),
+        profilePhoto: z.url("Invalid profile photo URL").optional(),
+      })
+      .strict(),
+  }),
+});
+
+// Schema for Creating a Super Admin
+// Note: Uses 'superAdmin' key to match your ICreateSuperAdminPayload interface
+const createSuperAdminSchema = z.object({
+  body: z.object({
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    superAdmin: z
+      .object({
+        name: z.string("Name is required"),
+        email: z.email("A valid email address is required"),
+        contactNumber: z
+          .string()
+          .length(11, "Contact number must be 11 digits"),
+        profilePhoto: z.string().url("Invalid profile photo URL").optional(),
+      })
+      .strict(),
+  }),
+});
+
 export const userValidation = {
   createDoctorSchema,
+  createAdminSchema,
+  createSuperAdminSchema,
 };

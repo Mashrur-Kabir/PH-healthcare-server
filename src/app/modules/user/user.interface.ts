@@ -23,3 +23,23 @@ export interface ICreateDoctorPayload {
   // We send an array of IDs from the frontend to link specialties
   specialties: string[];
 }
+
+export interface ICreateAdminPayload {
+  password: string;
+  admin: {
+    name: string;
+    email: string;
+    profilePhoto?: string;
+    contactNumber: string;
+  };
+}
+
+export interface ICreateSuperAdminPayload {
+  password: string;
+  superAdmin: {
+    name: string;
+    email: string;
+    profilePhoto?: string;
+    contactNumber: string;
+  };
+}

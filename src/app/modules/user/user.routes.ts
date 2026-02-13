@@ -17,13 +17,13 @@ router.post(
 );
 router.post(
   "/create-admin",
-  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
-  userController.createDoctor,
+  checkAuth(Role.SUPER_ADMIN),
+  userController.createAdmin,
 );
 router.post(
   "/create-superadmin",
   checkAuth(Role.SUPER_ADMIN),
-  userController.createDoctor,
+  userController.createSuperAdmin,
 );
 
 export const UserRoutes = router;
