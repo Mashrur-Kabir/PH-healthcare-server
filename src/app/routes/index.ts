@@ -3,6 +3,8 @@ import { SpecialtyRoutes } from "../modules/specialty/specialty.routes";
 import { AuthRoutes } from "../modules/auth/auth.routes";
 import { UserRoutes } from "../modules/user/user.routes";
 import { DoctorRoutes } from "../modules/doctor/doctor.routes";
+import { AdminRoutes } from "../modules/admin/admin.routes";
+import { SuperAdminRoutes } from "../modules/superAdmin/superAdmin.routes";
 
 const router = Router();
 
@@ -17,5 +19,11 @@ router.use("/users", UserRoutes);
 
 //doctor apis
 router.use("/doctors", DoctorRoutes);
+
+//admin apis
+router.use("/admins", AdminRoutes);
+
+//super admin apis
+router.use("/super-admins", SuperAdminRoutes);
 
 export const IndexRoutes = router;

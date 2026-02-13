@@ -10,6 +10,8 @@ declare global {
         role: Role;
         emailVerified: boolean;
         status?: UserStatus;
+        image?: string | null;
+        isDeleted?: boolean;
       };
     }
   }

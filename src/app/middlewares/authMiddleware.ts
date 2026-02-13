@@ -109,14 +109,16 @@ const checkAuth = (...roles: Role[]) => {
       id: user.id,
       name: user.name,
       email: user.email,
-      role: user.role as Role,
+      role: user.role,
       emailVerified: user.emailVerified,
-      status: user.status as UserStatus,
+      status: user.status,
+      image: user.image,
+      isDeleted: user.isDeleted,
     };
 
     /**
      * =========================================
-     * 6️⃣ ROLE AUTHORIZATION CHECK
+     * 6 ROLE AUTHORIZATION CHECK
      * =========================================
      */
     if (roles.length > 0 && !roles.includes(req.user.role)) {

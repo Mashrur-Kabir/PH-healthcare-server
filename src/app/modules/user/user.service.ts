@@ -44,13 +44,20 @@ const createDoctorInDB = async (payload: ICreateDoctorPayload) => {
       password: payload.password,
       role: Role.DOCTOR,
       needPasswordChange: true,
+      image: payload.doctor.profileImg,
     },
   });
 
   //Now you have a User ID, but the Doctor profile doesn't exist yet.
-
   try {
     const result = await prisma.$transaction(async (tx) => {
+      if (payload.doctor.profileImg) {
+        await tx.user.update({
+          where: { id: userData.user.id },
+          data: { image: payload.doctor.profileImg },
+        });
+      }
+
       const doctorData = await tx.doctor.create({
         data: {
           userId: userData.user.id,
@@ -146,12 +153,21 @@ const createAdminInDB = async (payload: ICreateAdminPayload) => {
       password: payload.password,
       role: Role.ADMIN,
       needPasswordChange: true,
+      image: payload.admin.profilePhoto,
     },
   });
 
   try {
     // 3. Create Admin profile in a transaction
     return await prisma.$transaction(async (tx) => {
+      // Update the central User record with the profile photo
+      if (payload.admin.profilePhoto) {
+        await tx.user.update({
+          where: { id: userData.user.id },
+          data: { image: payload.admin.profilePhoto },
+        });
+      }
+
       const adminData = await tx.admin.create({
         data: {
           userId: userData.user.id,
@@ -193,11 +209,20 @@ const createSuperAdminInDB = async (payload: ICreateSuperAdminPayload) => {
       password: payload.password,
       role: Role.SUPER_ADMIN, // Set as SUPER_ADMIN
       needPasswordChange: true,
+      image: payload.superAdmin.profilePhoto,
     },
   });
 
   try {
     return await prisma.$transaction(async (tx) => {
+      // Sync image to User table
+      if (payload.superAdmin.profilePhoto) {
+        await tx.user.update({
+          where: { id: userData.user.id },
+          data: { image: payload.superAdmin.profilePhoto },
+        });
+      }
+
       // Use the 'admin' table for the profile data
       const superAdminData = await tx.admin.create({
         data: {
