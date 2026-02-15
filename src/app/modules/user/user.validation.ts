@@ -50,7 +50,8 @@ const createAdminSchema = z.object({
           .length(11, "Contact number must be 11 digits"),
         profilePhoto: z.url("Invalid profile photo URL").optional(),
       })
-      .strict(),
+      .strict()
+      .optional(),
   }),
 });
 
@@ -66,9 +67,10 @@ const createSuperAdminSchema = z.object({
         contactNumber: z
           .string()
           .length(11, "Contact number must be 11 digits"),
-        profilePhoto: z.string().url("Invalid profile photo URL").optional(),
+        profilePhoto: z.url("Invalid profile photo URL").optional(),
       })
-      .strict(),
+      .strict()
+      .optional(),
   }),
 });
 

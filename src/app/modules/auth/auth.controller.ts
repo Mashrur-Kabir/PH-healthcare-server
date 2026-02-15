@@ -57,7 +57,23 @@ const loginPatient = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getMe = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user;
+  if (!user) {
+    throw new AppError(status.UNAUTHORIZED, "Unauthorized user!");
+  }
+  const result = await AuthService.getMeFromDB(user);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: "Your user details retrieved successfully!",
+    data: result,
+  });
+});
+
 export const AuthController = {
   registerPatient,
   loginPatient,
+  getMe,
 };

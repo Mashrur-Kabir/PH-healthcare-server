@@ -1,18 +1,8 @@
-import { Role, UserStatus } from "../../generated/prisma/enums";
-
+import { IAuthUser } from "../interfaces";
 declare global {
   namespace Express {
     interface Request {
-      user?: {
-        id: string;
-        email: string;
-        name: string;
-        role: Role;
-        emailVerified: boolean;
-        status?: UserStatus;
-        image?: string | null;
-        isDeleted?: boolean;
-      };
+      user: IAuthUser;
     }
   }
 }

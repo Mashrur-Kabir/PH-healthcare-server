@@ -8,6 +8,7 @@ import {
   IRegisterPatientPayload,
 } from "./auth.interface";
 import { tokenUtils } from "../../utils/token";
+import { IAuthUser } from "../../interfaces";
 
 const registerPatientInDB = async (payload: IRegisterPatientPayload) => {
   const { name, email, password, image } = payload;
@@ -133,7 +134,43 @@ const loginPatientInDB = async (payload: ILoginPatientPayload) => {
   };
 };
 
+const getMeFromDB = async (user: IAuthUser) => {
+  // Fetch the user with their specific profile based on role
+  const result = await prisma.user.findUnique({
+    where: {
+      id: user.id,
+      isDeleted: false,
+    },
+    include: {
+      patient: {
+        include: {
+          appointments: true,
+          reviews: true,
+          prescriptions: true,
+          patientHealthData: true,
+        },
+      },
+      doctor: {
+        include: {
+          specialties: true,
+          appointments: true,
+          reviews: true,
+          prescriptions: true,
+        },
+      },
+      admin: true,
+    },
+  });
+
+  if (!result) {
+    throw new AppError(status.NOT_FOUND, "User not found");
+  }
+
+  return result;
+};
+
 export const AuthService = {
   registerPatientInDB,
   loginPatientInDB,
+  getMeFromDB,
 };

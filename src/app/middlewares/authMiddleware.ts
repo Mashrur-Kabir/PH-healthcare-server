@@ -85,7 +85,7 @@ const checkAuth = (...roles: Role[]) => {
 
     /**
      * =========================================
-     * 4️ OPTIONAL: SESSION EXPIRY WARNING HEADERS
+     * 4️ SESSION EXPIRY WARNING HEADERS
      * =========================================
      */
     const now = Date.now();

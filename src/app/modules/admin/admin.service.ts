@@ -4,6 +4,7 @@ import { IAdminUpdatePayload } from "./admin.interface";
 import { AppError } from "../../error/AppError";
 import status from "http-status";
 import { Prisma } from "../../../generated/prisma/client";
+import { IAuthUser } from "../../interfaces";
 
 const getAllAdminsFromDB = async () => {
   return await prisma.admin.findMany({
@@ -74,8 +75,8 @@ const updateAdminInDB = async (id: string, payload: IAdminUpdatePayload) => {
   });
 };
 
-const softDeleteAdminFromDB = async (id: string) => {
-  // 1. Fetch the admin first to get the userId for the transaction
+// Updated delete function signature to accept current user info
+const softDeleteAdminFromDB = async (id: string, currentUser: IAuthUser) => {
   const admin = await prisma.admin.findUnique({
     where: { id, isDeleted: false },
   });
@@ -84,10 +85,17 @@ const softDeleteAdminFromDB = async (id: string) => {
     throw new AppError(status.NOT_FOUND, "Admin not found or already deleted.");
   }
 
+  // VULNERABILITY FIX: Prevent self-deletion
+  if (admin.userId === currentUser.id) {
+    throw new AppError(
+      status.BAD_REQUEST,
+      "Security Error: You cannot delete your own account.",
+    );
+  }
+
   return await prisma.$transaction(async (tx) => {
     const now = new Date();
 
-    // 2. Soft delete the Admin profile
     const deletedAdmin = await tx.admin.update({
       where: { id },
       data: {
@@ -96,7 +104,6 @@ const softDeleteAdminFromDB = async (id: string) => {
       },
     });
 
-    // 3. Sync the User account status to DELETED
     await tx.user.update({
       where: { id: admin.userId },
       data: {
@@ -104,6 +111,16 @@ const softDeleteAdminFromDB = async (id: string) => {
         status: UserStatus.DELETED,
         deletedAt: now,
       },
+    });
+
+    // SECURITY ENHANCEMENT: Immediate session termination
+    await tx.session.deleteMany({
+      where: { userId: admin.userId },
+    });
+
+    // DATA INTEGRITY: Remove OAuth/Linkage accounts
+    await tx.account.deleteMany({
+      where: { userId: admin.userId },
     });
 
     return deletedAdmin;

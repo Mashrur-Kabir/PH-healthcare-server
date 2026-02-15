@@ -4,6 +4,7 @@ import { ISuperAdminUpdatePayload } from "./superAdmin.interface";
 import { AppError } from "../../error/AppError";
 import status from "http-status";
 import { Prisma } from "../../../generated/prisma/client";
+import { IAuthUser } from "../../interfaces";
 
 const getAllSuperAdminsFromDB = async () => {
   return await prisma.admin.findMany({
@@ -54,7 +55,7 @@ const updateSuperAdminInDB = async (
       data: payload,
     });
 
-    // 2. Sync User table fields
+    // 2. Sync User table fields (Type-safe)
     const userUpdateData: Prisma.UserUpdateInput = {};
     if (payload.name) userUpdateData.name = payload.name;
     if (payload.profilePhoto) userUpdateData.image = payload.profilePhoto;
@@ -74,7 +75,10 @@ const updateSuperAdminInDB = async (
   });
 };
 
-const softDeleteSuperAdminFromDB = async (id: string) => {
+const softDeleteSuperAdminFromDB = async (
+  id: string,
+  currentUser: IAuthUser,
+) => {
   const admin = await prisma.admin.findUnique({
     where: { id, isDeleted: false },
   });
@@ -86,14 +90,24 @@ const softDeleteSuperAdminFromDB = async (id: string) => {
     );
   }
 
+  // SECURITY: Prevent self-deletion (Administrative Lockdown prevention)
+  if (admin.userId === currentUser.id) {
+    throw new AppError(
+      status.BAD_REQUEST,
+      "Security Error: You cannot delete your own account.",
+    );
+  }
+
   return await prisma.$transaction(async (tx) => {
     const now = new Date();
 
+    // 1. Soft delete Admin record
     const deletedSuperAdmin = await tx.admin.update({
       where: { id },
       data: { isDeleted: true, deletedAt: now },
     });
 
+    // 2. Soft delete User record & set status
     await tx.user.update({
       where: { id: admin.userId },
       data: {
@@ -101,6 +115,16 @@ const softDeleteSuperAdminFromDB = async (id: string) => {
         status: UserStatus.DELETED,
         deletedAt: now,
       },
+    });
+
+    // 3. KICK OUT: Immediate session revocation for security
+    await tx.session.deleteMany({
+      where: { userId: admin.userId },
+    });
+
+    // 4. CLEANUP: Delete OAuth accounts/Better-Auth linkages
+    await tx.account.deleteMany({
+      where: { userId: admin.userId },
     });
 
     return deletedSuperAdmin;
