@@ -952,12 +952,44 @@ Only valid roles reach controller.
 
 ---
 
+#### Extra:
+
+for http status:
+install:
+
+```bash
+npm i http-status
+```
+
+---
+
 # Global Type Declaration
 
 Create:
 
 ```
 ./app/types/index.d.ts
+```
+
+handling the Global Express Request inside index.d.ts:
+
+```ts
+import { Role, UserStatus } from "../../generated/prisma/enums";
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: string;
+        email: string;
+        name: string;
+        role: Role;
+        emailVerified: boolean;
+        status?: UserStatus;
+      };
+    }
+  }
+}
 ```
 
 ### Why this exists (clear explanation)
@@ -972,6 +1004,12 @@ We declare it globally so:
 - Enables **strong typing in controllers/services**
 
 This is a **core TypeScript backend pattern**.
+
+### in lib/auth.ts, add:
+
+```ts
+plugins: [bearer()];
+```
 
 ---
 
@@ -991,4 +1029,149 @@ Meaning:
 - Can access this endpoint
 - Others → **403 Forbidden**
 
+> review ./src/app/modules/auth to see token generation during login/registration and setting them as cookies.
+
+#### explanation of the user experience from the current setting as an example:
+
+Your system uses a **Short Leash** (Browser Cookies) and a **Long Leash** (Database/JWT).
+
+##### 1. The "Daily Routine" (The Seamless Experience)
+
+The Action: User opens the app every morning.
+The Code: `checkAuth` middleware sees the **AccessToken** (1-day life) is still in the browser.
+
+- Experience: The user is "instantly in." No login screen, no lag.
+
+##### 2. The "Silent Handshake" (The Token Rotation)
+
+The Action: The user has been using the app for exactly 24 hours.
+The Code: `getNewTokenService` is triggered. It checks the **RefreshToken** (7-day life).
+
+- It gives the user a **brand new** AccessToken and a **brand new** RefreshToken.
+- Experience: Totally invisible. The "7-day wall" is pushed back another week automatically. As long as they use the app daily, they stay logged in **forever**.
+
+##### 3. The "Missing Day" (The Strict Security)
+
+The Action: The user closes the app Friday night and doesn't open it until Sunday morning.
+The Code: `tokenUtils` set the **Cookie Max-Age** to 24 hours.
+
+- By Sunday, the browser has deleted the cookies.
+- Experience: The user is forced to **Log In again**. Even though the Database says they are valid for 7 days, the "Key" in their browser expired because they didn't "ping" the server within the 24-hour window.
+
+##### Which part of the code does what?
+
+- **`lib/auth.ts`:** Sets the initial "Master" session length (30 days).
+- **`auth.service.ts`:** Handles the "Infinite Loop" logic by resetting the DB expiry to 7 days every time a user is active.
+- **`tokenUtils.ts`:** Acts as the **Strict Gatekeeper**. Its `maxAge: 24h` is the reason users must log in if they miss a single day.
+
+#### Is this "Industry Standard"?
+
+Yes! This is called Token Rotation.
+
+Industry leaders (like Google or Facebook) use this exact logic. They don't want to annoy active users by logging them out every week. Instead, they say: "As long as you use our app regularly, we'll keep your keys fresh. We only force a login if you've been away so long that we're no longer sure it's actually you."
+
 ---
+
+14. Email service with Nodemailer for OTP:
+    install:
+    npm i nodemailer
+    npm i -D @types/nodemailer
+
+    npm install ejs
+    npm i -D @types/ejs
+
+    create app-password from google:
+    gtzi xxxx xxxx xxxx
+
+    \*in .env:
+    EMAIL_SENDER_SMTP_USER=mashrurkabirriyan@gmail.com
+    EMAIL_SENDER_SMTP_PASS=gtzi xxxx xxxx xxxx #app-password
+    EMAIL_SENDER_SMTP_HOST=smtp.gmail.com
+    EMAIL_SENDER_SMTP_PORT=465
+    EMAIL_SENDER_SMTP_FROM=mashrurkabirriyan@gmail.com
+
+    \*update src\app\interfaces\envConfig.ts and src\config\env.ts accordingly
+
+    \*create sendEmail function inside ./src/app/email.ts
+
+    \*create otp.ejs inside ./src/app/templates.
+
+    \*in lib/auth.ts, update (sample code, check the actual file for more functionalities added along):
+    //....other configs
+    plugins: [
+    bearer(),
+    emailOTP({
+    overrideDefaultEmailVerification: true,
+    async sendVerificationOTP({ email, otp, type }) {
+    if (type === "email-verification") {
+    const user = await prisma.user.findUnique({
+    where: {
+    email,
+    },
+    });
+    if (user && !user.emailVerified) {
+    sendEmail({
+    to: email,
+    subject: "Verify your email",
+    templateName: "otp",
+    templateData: {
+    name: user.name,
+    otp,
+    },
+    });
+    }
+    }
+    },
+    expiresIn: 2 * 60, //2 minutes
+    otpLength: 6,
+    }),
+    ],
+
+    \*make verify-email, forget-password, google-login and other necessary authentication and authorization routes in auth module
+
+15. Google Login:
+    \*go to google cloud > console > api and services > credentials > create credentials > oauth client id >
+
+    application type: web application
+    Name: PH-Healthcare-Backend
+    add uri: http://localhost:5000
+    redirect uri: http://localhost:5000/api/auth/callback/google
+
+    -click create
+
+    -copy and save the credentials inside your .env file. adjust the ./src/app/interface/envConfig.ts and ./src/config/env.ts accordingly:
+    GOOGLE_CLIENT_ID=1048417100456-xxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
+    GOOGLE_CLIENT_SECRET=GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxxx
+    GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/callback/google
+    FRONTEND_URL=http://localhost:3000 #dummy frontend for now
+
+    \*update ./src/app/lib/auth.ts with necessary configurations
+
+    \*in app.ts, at the very top, add:
+    app.set("view engine", "ejs");
+    app.set("views", path.resolve(process.cwd(), `src/app/templates`));
+
+    \*make the routes, controllers and services for google login
+
+    The "Flow":
+
+    /login/google: This is the "Start" button. When a user clicks "Login with Google," your frontend sends them here. This route tells Better-Auth to build a special Google URL and redirect the user's browser to Google's login page.
+
+    Google's Part: The user enters their Gmail credentials on Google's own site.
+
+    The Callback: Google sends the user back to your server (specifically to the app.use("/api/auth", ...) handler you set in app.ts). Better-Auth catches this, verifies the user, creates them in your Prisma DB, and sets a session.
+
+    /google/success: Once everything is finished, Better-Auth redirects the user to this "Success" route. Because Google login happens in a popup or a full-page redirect, we use this route to "talk" back to your Frontend (likely a React/Next.js app) to tell it, "Hey, they're logged in now!"
+
+    /oauth/error: If the user cancels or Google is down, they land here so you can show a friendly "Something went wrong" message.
+
+    Why We Use a Custom Google OAuth Flow?:
+    This project implements a hybrid Google Login strategy using Better-Auth and custom Express routes to meet strict healthcare data requirements:
+
+    Secure Redirection: Google login requires a browser-based redirect to their secure domain; our backend routes bridge the gap between your API, Google, and the frontend.
+
+    Custom Role Management: Google only provides basic info (name/email); our custom flow intercepts the login to automatically assign required system fields like role: PATIENT and status: ACTIVE.
+
+    Automated Profile Creation: Better-Auth only manages auth tables; our success route detects new Google users and instantly creates their corresponding Patient Profile in Prisma to ensure data synchronization.
+
+    JWT Handshake: To support our Dual-Token System, these routes facilitate the "handshake" that converts a verified Google identity into our custom system's Access and Refresh tokens.

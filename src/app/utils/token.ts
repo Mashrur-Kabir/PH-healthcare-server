@@ -53,7 +53,7 @@ const setBetterAuthSessionCookie = (res: Response, token: string) => {
     secure: envVars.NODE_ENV === "production",
     sameSite: "none",
     path: "/",
-    maxAge: 1000 * 60 * 60 * 24,
+    maxAge: 1000 * 60 * 60 * 24, //CHANGE: From 1 day to 7 days if you want the session to last longer.
   });
 };
 

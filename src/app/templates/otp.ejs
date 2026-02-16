@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            margin: 0;
+            padding: 0;
+            color: #1e293b;
+        }
+        .wrapper {
+            width: 100%;
+            table-layout: fixed;
+            background-color: #f8fafc;
+            padding-bottom: 40px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background-color: #0f172a; /* Slate 900 */
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            font-weight: 700;
+            color: #38bdf8; /* Cyan 400 */
+        }
+        .content {
+            padding: 48px;
+            text-align: center;
+        }
+        .greeting {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #0f172a;
+        }
+        .instruction {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 40px;
+            color: #64748b; /* Slate 500 */
+        }
+        
+        /* Minimalist OTP Section */
+        .otp-display {
+            background-color: #f1f5f9; /* Slate 100 */
+            border-radius: 12px;
+            padding: 24px;
+            margin: 0 auto 32px auto;
+            display: inline-block;
+            min-width: 240px;
+        }
+        .otp-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .otp-code {
+            font-size: 40px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: 12px;
+            margin-left: 12px; /* Offsets last letter-spacing for centering */
+        }
+
+        .expiry-note {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 24px;
+        }
+        .expiry-note strong {
+            color: #ef4444; /* Alert Red */
+        }
+        .security-msg {
+            font-size: 13px; 
+            color: #f87171; /* Soft Red */
+            background-color: #fef2f2;
+            padding: 12px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        .footer {
+            padding: 32px;
+            text-align: center;
+            font-size: 12px;
+            color: #94a3b8;
+            background-color: #f8fafc;
+            border-top: 1px solid #f1f5f9;
+        }
+        .footer p {
+            margin: 4px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="container">
+            <div class="header">
+                <h1>Healthcare Portal</h1>
+            </div>
+            <div class="content">
+                <p class="greeting">Hello, <%= name %></p>
+                <p class="instruction">
+                    Use the secure authorization code below to verify your account and continue.
+                </p>
+                
+                <div class="otp-display">
+                    <span class="otp-label">Verification Code</span>
+                    <div class="otp-code"><%= otp %></div>
+                </div>
+
+                <p class="expiry-note">
+                    Expires in <strong>2 minutes</strong>.
+                </p>
+
+                <div class="security-msg">
+                    If you didn't request this code, your account may be at risk.
+                </div>
+            </div>
+            <div class="footer">
+                <p><strong>&copy; 2026 Healthcare Platform Inc.</strong></p>
+                <p>Secure Systems &bull; System ID: <%= otp %></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Successful</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f8fafc;
+            margin: 0;
+        }
+        .loader {
+            text-align: center;
+        }
+        .spinner {
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #38bdf8;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        h2 { color: #0f172a; font-size: 18px; }
+    </style>
+</head>
+<body>
+    <div class="loader">
+        <div class="spinner"></div>
+        <h2>Finalizing your secure login...</h2>
+    </div>
+
+    <script>
+        // 1. Data passed from your Controller
+        const authData = {
+            success: true,
+            user: <%- JSON.stringify(user) %>,
+            accessToken: "<%= accessToken %>",
+            refreshToken: "<%= refreshToken %>"
+        };
+
+        // 2. Send data to the parent window (your Frontend)
+        if (window.opener) {
+            window.opener.postMessage(
+                { type: "GOOGLE_LOGIN_SUCCESS", payload: authData },
+                "<%= frontendUrl %>" 
+            );
+            
+            // 3. Close this popup window
+            window.close();
+        } else {
+            // If it wasn't a popup, just redirect to the frontend dashboard
+            window.location.href = "<%= frontendUrl %>/dashboard";
+        }
+    </script>
+</body>
+</html>
