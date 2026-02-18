@@ -136,7 +136,14 @@ export const auth = betterAuth({
     },
   },
 
-  trustedOrigins: [envVars.BETTER_AUTH_URL, envVars.FRONTEND_URL],
+  trustedOrigins: [
+    envVars.BETTER_AUTH_URL || "http://localhost:5000",
+    envVars.FRONTEND_URL,
+  ],
+
+  redirectURLs: {
+    signIn: `${envVars.BETTER_AUTH_URL}/api/v1/auth/google/success`,
+  },
 
   advanced: {
     useSecureCookies: false,
@@ -160,7 +167,3 @@ export const auth = betterAuth({
     },
   },
 });
-
-// redirectURLs: {
-//   signIn: "",
-// },

@@ -1147,11 +1147,15 @@ Industry leaders (like Google or Facebook) use this exact logic. They don't want
 
     \*update ./src/app/lib/auth.ts with necessary configurations
 
+    \*make .ejs files for redirect, success, failure inside the ./src/app/templates folder
+
     \*in app.ts, at the very top, add:
     app.set("view engine", "ejs");
     app.set("views", path.resolve(process.cwd(), `src/app/templates`));
 
     \*make the routes, controllers and services for google login
+
+    \*in browser: http://localhost:5000/api/v1/auth/login/google
 
     The "Flow":
 
@@ -1175,3 +1179,111 @@ Industry leaders (like Google or Facebook) use this exact logic. They don't want
     Automated Profile Creation: Better-Auth only manages auth tables; our success route detects new Google users and instantly creates their corresponding Patient Profile in Prisma to ensure data synchronization.
 
     JWT Handshake: To support our Dual-Token System, these routes facilitate the "handshake" that converts a verified Google identity into our custom system's Access and Refresh tokens.
+
+16. Cloudinary for image upload:
+    install:
+    npm i cloudinary
+
+    npm i multer
+    npm i -D @types/multer
+
+    npm i multer-storage-cloudinary
+
+    \*in .env, add:
+    CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME as string,
+    CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY as string,
+    CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET as string
+
+    -update ./src/app/interface/envConfig.ts and ./src/config/env.ts accordingly
+
+    \*configure cloudinary:
+    in ./src/app/config, create cloudinary.config.ts
+
+    \*configure multer:
+    in ./src/app/config, create multer.config.ts
+
+    \*usage example:
+    controller:
+    router.post(
+    "/",
+    checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+    multerUpload.single("file"),
+    specialtyController.createSpecialty,
+    );
+
+    \*update controller and validateRequest.ts middleware:
+    const createSpecialty = catchAsync(async (req: Request, res: Response) => {
+    const payload = req.body;
+    // Add the Cloudinary URL from Multer to the payload
+    if (req.file) {
+    payload.icon = req.file.path;
+    }
+    //....business logic
+
+    sendResponse(res, {
+    .....
+    });
+    });
+
+    middleware:
+    const validateRequest = (schema: ZodObject) => {
+    return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+    // 1. Pre-parse: If data is a stringified JSON (common in Multer/Form-data)
+    if (req.body.data && typeof req.body.data === "string") {
+    req.body = JSON.parse(req.body.data);
+    }
+    // 2. Validate ONLY the content of req.body against the schema
+    // This matches your: z.object({ title: z.string() })
+    const result = await schema.parseAsync(req.body);
+
+        // 3. Sanitize: Overwrite req.body with the cleaned data from Zod
+        req.body = result;
+
+        next();
+
+    } catch (err) {
+    // Pass the ZodError directly to your globalErrorHandler
+    next(err);
+    }
+    };
+    };
+
+    why?:
+    while using multipart/form-data in Postman, everything except the file is treated as a string. Your req.body.data is considered a raw string like "{ "title": "Gastroenterology" }" rather than a JavaScript object, which is why Prisma would complain that the title argument is missing.
+
+    in postman:
+    POST: http://localhost:5000/api/v1/specialties
+
+    create specialty with icon-
+
+    > under body: enable "form-data" instead of your usual raw json, then:
+    > key = data
+    > value = {"title": "Gastroenterology"}
+    > under the "form-data" write "file" as another key,
+    > select "file" as type
+    > as its value, select a file (an image for example) from local machine
+
+    \*create upload and delete functionalities (explain why\*\*) for flexibility inside cloudinary.config.ts
+
+    \*explanation:
+    1. Manual Control (cloudinary.config.ts):
+       This file contains the logic for when you need to handle files programmatically in your services.
+
+       uploadFileToCloudinary: It takes a raw Buffer (data in memory) and "streams" it to Cloudinary. This is memory-efficient because it doesn't save the file to your server's hard drive first. It also cleans up filenames (removes spaces/special characters) to make them URL-friendly.
+
+       deleteFileFromCloudinary: It takes a full URL, uses Regex to extract the public_id, determines if the file is an image, video, or document (raw), and deletes it from your cloud storage.
+
+    2. Automatic Integration (multer.config.ts):
+       This file is your Middleware. It’s designed to sit directly on your Express routes.
+
+       multerUpload: When a user sends a file via a form (multipart/form-data), this middleware intercepts it.
+
+       Dynamic Routing: It automatically looks at the file type (MIME type) and sorts it into the correct Cloudinary folder (/images, /videos, or /documents) before your actual controller code even runs.
+
+       Hands-off: You don't have to manually call "upload"; Multer and multer-storage-cloudinary handle the transit for you.
+
+17. Query builder:
+    install:
+    npm i qs
+    npm i -D @types/qs

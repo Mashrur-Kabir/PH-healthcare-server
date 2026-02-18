@@ -1,23 +1,36 @@
 import { NextFunction, Request, Response } from "express";
 import { ZodObject } from "zod";
 
-const validateRequest = (schema: ZodObject) => {
+export const validateRequest = (zodSchema: ZodObject) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Parse the request against the schema
-      // This checks req.body, req.query, and req.cookies if defined in schema
-      const result = await schema.parseAsync({
+      // 1. Handle stringified data (form-data/multer)
+      if (req.body.data && typeof req.body.data === "string") {
+        req.body = JSON.parse(req.body.data);
+      }
+
+      // 2. Validate. Pass the structure that matches your Schema!
+      const parsedResult = await zodSchema.parseAsync({
         body: req.body,
         query: req.query,
         params: req.params,
         cookies: req.cookies,
       });
 
-      //sanitization:
-      req.body = result.body; //sIf the user sent extra junk fields (like location: "Mars"), Zod strips them out, and the "clean" data is put back into req.body.
+      // 3. Sanitize/Update req with validated data
+      req.body = parsedResult.body;
+
+      // Use Object.assign for query/params to avoid the "Getter only" error
+      if (parsedResult.query) {
+        Object.assign(req.query, parsedResult.query);
+      }
+      if (parsedResult.params) {
+        Object.assign(req.params, parsedResult.params);
+      }
+
       next();
     } catch (err) {
-      // If validation fails, pass the Zod error to the global error handler
+      // Passes ZodError to your globalErrorHandler
       next(err);
     }
   };

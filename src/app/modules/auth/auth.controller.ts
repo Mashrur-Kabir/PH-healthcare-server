@@ -248,7 +248,11 @@ const googleLoginSuccess = catchAsync(async (req: Request, res: Response) => {
     }),
   });
 
-  if (!session || !session.user) {
+  if (!session) {
+    return res.redirect(`${envVars.FRONTEND_URL}/login?error=no_session_found`);
+  }
+
+  if (session && !session.user) {
     return res.redirect(`${envVars.FRONTEND_URL}/login?error=no_user_found`);
   }
 

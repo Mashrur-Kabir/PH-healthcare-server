@@ -7,14 +7,14 @@ import status from "http-status";
 
 const createSpecialty = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
-  if (!payload) {
-    throw new AppError(400, "Request body/payload missing!");
+  // Add the Cloudinary URL from Multer to the payload
+  if (req.file) {
+    payload.icon = req.file?.path;
   }
-
   const result = await specialtyService.createSpecialtyInDB(payload);
 
   sendResponse(res, {
-    statusCode: status.CREATED,
+    statusCode: 201,
     success: true,
     message: "Specialty created successfully",
     data: result,

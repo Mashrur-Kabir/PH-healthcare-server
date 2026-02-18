@@ -23,7 +23,7 @@
                 const response = await fetch("<%= betterAuthUrl %>/api/auth/sign-in/social", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    // This tells the browser to store the cookies the server sends back
+                    // MANDATORY: Tells the browser to save the 'state' cookie from the response
                     credentials: "include", 
                     body: JSON.stringify({
                         provider: "google",
@@ -31,28 +31,22 @@
                     })
                 });
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || "Auth server error");
-                }
-
                 const data = await response.json();
 
                 if (data.url) {
-                    // We use replace() instead of href to avoid back-button loops
-                    // and a tiny delay to ensure the browser saves the 'state' cookie
+                    // We add a 150ms delay. 
+                    // This gives the browser's cookie manager time to write the 
+                    // Better-Auth state to local storage before the page unloads.
                     setTimeout(() => {
-                        window.location.replace(data.url);
-                    }, 150); 
+                        window.location.href = data.url;
+                    }, 150);
                 } else {
-                    throw new Error("No redirect URL received");
+                    throw new Error("No URL returned from Auth server");
                 }
             } catch (error) {
-                console.error("OAuth Error:", error);
                 document.querySelector('p').innerHTML = `
-                    <span style="color: #ef4444; font-weight: 600;">Login Failed</span><br/>
-                    <small style="color: #64748b;">${error.message}</small><br/>
-                    <button onclick="window.location.reload()" style="margin-top:10px; cursor:pointer;">Retry</button>
+                    <span style="color: #ef4444;">Handshake Failed</span><br/>
+                    <small>${error.message}</small>
                 `;
             }
         })();
