@@ -1287,3 +1287,117 @@ Industry leaders (like Google or Facebook) use this exact logic. They don't want
     install:
     npm i qs
     npm i -D @types/qs
+
+    in top of app.ts:
+    //query parser
+    app.set("query parser", (str: string) => qs.parse(str));
+
+    create ./app/utils/QueryBuilder.ts and its corresponding interface inside ./app/interfaces/query.interface.ts
+
+    usage example inside app/modules/doctor/doctor.service.ts/getAllDoctorsFromDB():
+
+    const getAllDoctorsFromDB = async (query: IQueryParams) => {
+    const queryBuilder = new QueryBuilder<
+    Doctor,
+    Prisma.DoctorWhereInput,
+    Prisma.DoctorInclude
+
+    > (prisma.doctor, query, {
+    > searchableFields: doctorSearchableFields,
+    > filterableFields: doctorFilterableFields,
+    > });
+
+    const result = await queryBuilder
+    .search()
+    .filter()
+    .where({
+    isDeleted: false,
+    })
+    .include({
+    user: true,
+    // specialties: true,
+    specialties: {
+    include: {
+    specialty: true,
+    },
+    },
+    })
+    .dynamicInclude(doctorIncludeConfig)
+    .paginate()
+    .sort()
+    .fields()
+    .execute();
+
+    console.log(result);
+    return result;
+    };
+
+18. extra:
+
+    \*install date-fns for date handling:
+    install:
+    npm install date-fns
+    npm install -D @types/date-fns
+
+    \*install uuid:
+    npm i uuid @types/uuid
+
+    \*install cron:
+    npm i node-cron
+    npm i -D @types/node-cron
+
+    \*create seeding superAdmin file in ./app/utils/seed.ts
+    add necessary credentials in .env and run in server.ts at the top:
+    //seed admin first:
+    await seedSuperAdmin();
+
+19. Payment with Stripe:
+    install stripe:
+    npm install stripe
+
+    \*add STRIPE_SECRET_KEY to .env
+    update envConfig.ts and env.ts accordingly
+
+    \*for webhook:
+    stripe dashboard > add webhook endpoint > test with local listener
+
+    (download strip cli if you havent already)
+
+    in terminal: stripe login
+
+    make script in package.json:
+    "stripe:webhook": "stripe listen --forward-to localhost:5000/webhook",
+
+    in app.ts:
+    app.post(
+    "/webhook",
+    express.raw({ type: "application/json" }),
+    app.post(
+    "/webhook",
+    express.raw({ type: "application/json" }),
+    PaymentController.handleStripeWebhookEvent,
+    );
+    );
+
+    run:
+    npm run stripe:webhook
+
+    -paste webhook in .env as STRIPE_WEBHOOK_SECRET
+
+    \*click add destinations in stripe dashboard:
+    select events:
+    search "payment" and check-
+    -Occurs when a payment intent using a delayed payment method fails.
+    -Occurs when a payment intent using a delayed payment method finally succeeds
+
+    search "complete" and check-
+    -Occurs when a Checkout Session has been successfully completed.
+    -Occurs when a PaymentIntent has successfully completed payment.
+
+    search "expired" and check-
+    -Occurs when a Checkout Session is expired.
+
+    click continue > webhook endpoint > enter the live link for endpoint url
+
+    trigger events with cli:
+    stripe trigger payment_intent.succeeded

@@ -14,7 +14,7 @@ const createSpecialty = catchAsync(async (req: Request, res: Response) => {
   const result = await specialtyService.createSpecialtyInDB(payload);
 
   sendResponse(res, {
-    statusCode: 201,
+    statusCode: status.CREATED,
     success: true,
     message: "Specialty created successfully",
     data: result,

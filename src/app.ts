@@ -9,11 +9,26 @@ import path from "path";
 import { envVars } from "./config/env";
 import cors from "cors";
 import qs from "qs";
+import { PaymentController } from "./app/modules/payment/payment.controller";
+import cron from "node-cron";
+import { AppointmentService } from "./app/modules/appointment/appointment.service";
 
+//express
 const app: Application = express();
 
 //query parser
 app.set("query parser", (str: string) => qs.parse(str));
+
+// Set EJS as the view engine
+app.set("view engine", "ejs");
+app.set("views", path.resolve(process.cwd(), `src/app/templates`));
+
+//payment webhook event-handler
+app.post(
+  "/webhook",
+  express.raw({ type: "application/json" }),
+  PaymentController.handleStripeWebhookEvent,
+);
 
 //cors middleware
 app.use(
@@ -35,15 +50,22 @@ app.use(cookieParser());
 // Enable URL-encoded form data parsing
 app.use(express.urlencoded({ extended: true }));
 
-// Set EJS as the view engine
-app.set("view engine", "ejs");
-app.set("views", path.resolve(process.cwd(), `src/app/templates`));
-
 app.use("/api/auth", toNodeHandler(auth));
 
 // Basic route
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello! from PH-healthcare Server :)");
+});
+
+// node-cron
+cron.schedule("*/25 * * * *", async () => {
+  try {
+    console.log("Running cron job to cancel unpaid appointments");
+    await AppointmentService.cancelUnpaidAppointmentsInDB();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    console.error("Error running cron job:", error);
+  }
 });
 
 //Business Logic (auth, models..)

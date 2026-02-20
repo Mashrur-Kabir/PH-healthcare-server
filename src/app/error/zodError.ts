@@ -7,10 +7,14 @@ export const handleZodError = (err: ZodError) => {
   const message = "Zod Validation Error";
 
   const errorSources: IErrorSources[] = err.issues.map((issue) => {
-    const filteredPath = issue.path.filter((p) => p !== "body");
-
+    /**
+     * Instead of filtering out 'body', let's keep the full path
+     * but join it with dots.
+     * This way, if it's 'body.startDate', you know it's a structural issue.
+     */
     return {
-      path: filteredPath.length > 0 ? filteredPath.join(".") : "root",
+      path: issue.path.join("."),
+      location: issue.path[0],
       message: issue.message,
     };
   });

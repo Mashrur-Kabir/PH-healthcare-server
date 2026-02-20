@@ -5,12 +5,12 @@ import { IUpdateDoctorPayload } from "./doctor.interface";
 import { UserStatus } from "../../../generated/prisma/enums";
 import { Doctor, Prisma } from "../../../generated/prisma/client";
 import { QueryBuilder } from "../../utils/QueryBuilder";
-import { IQueryParams } from "../../interfaces/query.interface";
 import {
   doctorFilterableFields,
   doctorIncludeConfig,
   doctorSearchableFields,
 } from "./doctor.constant";
+import { IQueryParams } from "../../interfaces";
 
 const getAllDoctorsFromDB = async (query: IQueryParams) => {
   // const doctors = await prisma.doctor.findMany({
