@@ -1,11 +1,15 @@
 import app from "./app";
 import { logger } from "./app/utils/logger";
+import { seedSuperAdmin } from "./app/utils/seed";
 import { envVars } from "./config/env";
 
 const PORT = envVars.PORT;
 
 const bootstrap = async () => {
   try {
+    //seed admin first:
+    await seedSuperAdmin();
+
     const server = app.listen(PORT, () => {
       logger.success(`Server is running on http://localhost:${PORT}`);
     });

@@ -39,7 +39,7 @@ const changeAppointmentStatus = catchAsync(
     const updatedAppointment =
       await AppointmentService.changeAppointmentStatusInDB(
         appointmentId as string,
-        payload,
+        payload.status,
         user,
       );
     sendResponse(res, {

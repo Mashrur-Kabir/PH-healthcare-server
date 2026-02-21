@@ -1,4 +1,4 @@
-import { addHours, addMinutes, format } from "date-fns";
+import { addMinutes, format } from "date-fns";
 import { Prisma, Schedule } from "../../../generated/prisma/client";
 import { IQueryParams } from "../../interfaces/query.interface";
 import { prisma } from "../../lib/prisma";
@@ -13,69 +13,63 @@ import {
   scheduleIncludeConfig,
   scheduleSearchableFields,
 } from "./schedule.constant";
+import { AppError } from "../../error/AppError";
+import status from "http-status";
 
 const createScheduleInDB = async (payload: ICreateSchedulePayload) => {
   const { startDate, endDate, startTime, endTime } = payload;
-
   const interval = 30;
+
+  // Guardrail
+  if (startTime >= endTime) {
+    throw new AppError(
+      status.BAD_REQUEST,
+      "Start time must be earlier than end time!",
+    );
+  }
 
   const currentDate = new Date(startDate);
   const lastDate = new Date(endDate);
-
-  const schedules = [];
+  const allScheduleData = [];
 
   while (currentDate <= lastDate) {
-    const startDateTime = new Date(
-      addMinutes(
-        addHours(
-          `${format(currentDate, "yyyy-MM-dd")}`,
-          Number(startTime.split(":")[0]),
-        ),
-        Number(startTime.split(":")[1]),
-      ),
-    );
+    const dateStr = format(currentDate, "yyyy-MM-dd");
 
-    const endDateTime = new Date(
-      addMinutes(
-        addHours(
-          `${format(currentDate, "yyyy-MM-dd")}`,
-          Number(endTime.split(":")[0]),
-        ),
-        Number(endTime.split(":")[1]),
-      ),
-    );
+    // Construct local reference points
+    let currentSlotStart = new Date(`${dateStr}T${startTime}:00`);
+    const dayEnd = new Date(`${dateStr}T${endTime}:00`);
 
-    while (startDateTime < endDateTime) {
-      const s = await convertDateTime(startDateTime);
-      const e = await convertDateTime(addMinutes(startDateTime, interval));
+    while (currentSlotStart < dayEnd) {
+      const currentSlotEnd = addMinutes(currentSlotStart, interval);
 
-      const scheduleData = {
-        startDateTime: s,
-        endDateTime: e,
-      };
-
-      const existingSchedule = await prisma.schedule.findFirst({
-        where: {
-          startDateTime: scheduleData.startDateTime,
-          endDateTime: scheduleData.endDateTime,
-        },
+      allScheduleData.push({
+        startDateTime: convertDateTime(currentSlotStart),
+        endDateTime: convertDateTime(currentSlotEnd),
       });
 
-      if (!existingSchedule) {
-        const result = await prisma.schedule.create({
-          data: scheduleData,
-        });
-        console.log(result);
-        schedules.push(result);
-      }
-
-      startDateTime.setMinutes(startDateTime.getMinutes() + interval);
+      currentSlotStart = currentSlotEnd;
     }
-
     currentDate.setDate(currentDate.getDate() + 1);
   }
 
-  return schedules;
+  // Optimized: Single database trip with duplicate prevention
+  await prisma.schedule.createMany({
+    data: allScheduleData,
+    skipDuplicates: true,
+  });
+
+  // Re-fetch to return actual data
+  return await prisma.schedule.findMany({
+    where: {
+      startDateTime: {
+        gte: convertDateTime(new Date(`${startDate}T${startTime}:00`)),
+      },
+      endDateTime: {
+        lte: convertDateTime(new Date(`${endDate}T${endTime}:00`)),
+      },
+    },
+    orderBy: { startDateTime: "asc" },
+  });
 };
 
 const getAllSchedulesFromDB = async (query: IQueryParams) => {
@@ -112,36 +106,41 @@ const getScheduleByIdFromDB = async (id: string) => {
 // refactoring - doctor's appointment or booked slot conflict check
 const updateScheduleInDB = async (
   id: string,
-  payload: IUpdateSchedulePayload,
+  payload: Partial<IUpdateSchedulePayload>,
 ) => {
   const { startDate, endDate, startTime, endTime } = payload;
-  const startDateTime = new Date(
-    addMinutes(
-      addHours(
-        `${format(new Date(startDate), "yyyy-MM-dd")}`,
-        Number(startTime.split(":")[0]),
-      ),
-      Number(startTime.split(":")[1]),
-    ),
-  );
 
-  const endDateTime = new Date(
-    addMinutes(
-      addHours(
-        `${format(new Date(endDate), "yyyy-MM-dd")}`,
-        Number(endTime.split(":")[0]),
-      ),
-      Number(endTime.split(":")[1]),
-    ),
-  );
+  // 1. Fetch the existing schedule so we have fallbacks for missing fields
+  const existingSchedule = await prisma.schedule.findUniqueOrThrow({
+    where: { id },
+  });
+
+  // 2. Helper to extract the date/time digits without local timezone interference
+  const getUTCString = (date: Date) => date.toISOString(); // e.g., "2026-04-01T03:00:00.000Z"
+
+  // 3. Merge: Use the payload value IF provided, otherwise use the DB value
+  const dateForStart =
+    startDate || getUTCString(existingSchedule.startDateTime).split("T")[0];
+  const dateForEnd =
+    endDate || getUTCString(existingSchedule.endDateTime).split("T")[0];
+
+  const timeForStart =
+    startTime ||
+    getUTCString(existingSchedule.startDateTime).split("T")[1].substring(0, 5);
+  const timeForEnd =
+    endTime ||
+    getUTCString(existingSchedule.endDateTime).split("T")[1].substring(0, 5);
+
+  // 4. Use your helper to ensure the final Date object is "Pure UTC"
+  // This keeps the Create and Update logic perfectly synchronized
+  const startDateTime = new Date(`${dateForStart}T${timeForStart}:00Z`);
+  const endDateTime = new Date(`${dateForEnd}T${timeForEnd}:00Z`);
 
   const updatedSchedule = await prisma.schedule.update({
-    where: {
-      id: id,
-    },
+    where: { id },
     data: {
-      startDateTime: startDateTime,
-      endDateTime: endDateTime,
+      startDateTime,
+      endDateTime,
     },
   });
 

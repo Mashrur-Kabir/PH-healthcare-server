@@ -1385,7 +1385,7 @@ Industry leaders (like Google or Facebook) use this exact logic. They don't want
     -paste webhook in .env as STRIPE_WEBHOOK_SECRET
 
     \*click add destinations in stripe dashboard:
-    select events:
+    select events with descriptions:
     search "payment" and check-
     -Occurs when a payment intent using a delayed payment method fails.
     -Occurs when a payment intent using a delayed payment method finally succeeds
@@ -1401,3 +1401,6 @@ Industry leaders (like Google or Facebook) use this exact logic. They don't want
 
     trigger events with cli:
     stripe trigger payment_intent.succeeded
+
+    \*usage example:
+    start npm run stripe:webhook before creating an appointment that returns payment url in response. click the url. add info. done

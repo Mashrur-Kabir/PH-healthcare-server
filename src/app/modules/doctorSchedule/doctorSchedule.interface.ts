@@ -1,10 +1,10 @@
 export interface ICreateDoctorSchedulePayload {
-    scheduleIds : string[];
+  scheduleIds: string[];
 }
 
 export interface IUpdateDoctorSchedulePayload {
-    scheduleIds :{
-        shouldDelete : boolean;
-        id : string;
-    }[]
+  scheduleIds: {
+    shouldDelete: boolean;
+    id: string;
+  }[];
 }
