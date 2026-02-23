@@ -1,21 +1,18 @@
 model MedicalReport {
     id String @id @default(uuid(7))
 
-    diagnosis    String
-    treatment    String
+    diagnosis    String?
+    treatment    String?
     followUpDate DateTime?
     createdAt    DateTime  @default(now())
     updatedAt    DateTime  @updatedAt
+    reportLink   String
+    reportName   String
 
     // Relations
-    patientId     String
-    doctorId      String
-    appointmentId String      @unique
-    patient       Patient     @relation(fields: [patientId], references: [id], onDelete: Cascade)
-    doctor        Doctor      @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-    appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+    patientId String
+    patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
     @@index([patientId], name: "idx_medical_reports_patientId")
-    @@index([doctorId], name: "idx_medical_reports_doctorId")
     @@map("medical_reports")
 }

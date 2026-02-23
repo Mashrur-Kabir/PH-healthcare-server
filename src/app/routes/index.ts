@@ -8,6 +8,9 @@ import { SuperAdminRoutes } from "../modules/superAdmin/superAdmin.routes";
 import { ScheduleRoutes } from "../modules/schedule/schedule.routes";
 import { DoctorScheduleRoutes } from "./../modules/doctorSchedule/doctorSchedule.route";
 import { AppointmentRoutes } from "../modules/appointment/appointment.route";
+import { PatientRoutes } from "../modules/patient/patient.route";
+import { ReviewRoutes } from "../modules/review/review.route";
+import { PrescriptionRoutes } from "../modules/prescriptions/prescription.route";
 
 const router = Router();
 
@@ -23,6 +26,9 @@ router.use("/users", UserRoutes);
 //doctor apis
 router.use("/doctors", DoctorRoutes);
 
+//patient apis
+router.use("/patients", PatientRoutes);
+
 //admin apis
 router.use("/admins", AdminRoutes);
 
@@ -37,5 +43,11 @@ router.use("/doctor-schedules", DoctorScheduleRoutes);
 
 //appointments
 router.use("/appointments", AppointmentRoutes);
+
+//review
+router.use("/reviews", ReviewRoutes);
+
+//prescriptions
+router.use("/prescriptions", PrescriptionRoutes);
 
 export const IndexRoutes = router;

@@ -1346,6 +1346,10 @@ Industry leaders (like Google or Facebook) use this exact logic. They don't want
     npm i node-cron
     npm i -D @types/node-cron
 
+    \*install pdfkit:
+    npm i pdfkit
+    npm i -D @types/pdfkit
+
     \*create seeding superAdmin file in ./app/utils/seed.ts
     add necessary credentials in .env and run in server.ts at the top:
     //seed admin first:

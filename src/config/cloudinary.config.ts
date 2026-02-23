@@ -15,47 +15,41 @@ export const uploadFileToCloudinary = async (
   fileName: string,
 ): Promise<UploadApiResponse> => {
   if (!buffer || !fileName) {
-    throw new AppError(
-      status.BAD_REQUEST,
-      "File buffer and file name are required for upload",
-    );
+    throw new AppError(status.BAD_REQUEST, "File buffer and name are required");
   }
 
-  // 1. Improved extension check
   const parts = fileName.split(".");
   const extension = parts.length > 1 ? parts.pop()?.toLowerCase() : "";
-
-  // 2. Clean filename logic (keep it concise)
   const cleanedName = parts
     .join(".")
     .toLowerCase()
-    .replace(/[^a-z0-9]/g, "-") // Replaces everything non-alphanumeric with a dash
-    .replace(/-+/g, "-"); // Prevents double dashes like "my--file"
+    .replace(/[^a-z0-9]/g, "-")
+    .replace(/-+/g, "-");
 
-  const uniqueName = `${Math.random().toString(36).substring(2, 8)}-${Date.now()}-${cleanedName}`;
+  // FIX 1: Keep the extension in the public_id so the URL ends in .pdf
+  const uniqueName = `${Math.random().toString(36).substring(2, 8)}-${Date.now()}-${cleanedName}.${extension}`;
   const folderPath = `ph-healthcare/${extension === "pdf" ? "pdfs" : "images"}`;
 
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
+        // FIX 2: Explicitly set "image" for PDFs to allow browser viewing
         resource_type: "auto",
-        public_id: uniqueName, // The public_id is just the name
-        folder: folderPath, // The folder handles the directory structure
+        public_id: uniqueName,
+        folder: folderPath,
       },
       (error, result) => {
-        if (error) {
+        if (error)
           return reject(
             new AppError(
               status.INTERNAL_SERVER_ERROR,
               "Cloudinary upload failed",
             ),
           );
-        }
         resolve(result as UploadApiResponse);
       },
     );
 
-    // 3. Handle stream-level errors (network issues, etc.)
     uploadStream.on("error", (err) => {
       reject(
         new AppError(

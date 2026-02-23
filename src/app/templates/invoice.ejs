@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Invoice - PH Healthcare</title>
+</head>
+
+<body style="margin:0;padding:0;background-color:#f1f5f9;font-family:Arial,Helvetica,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 15px;background-color:#f1f5f9;">
+    <tr>
+      <td align="center">
+
+        <!-- Main Card -->
+        <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:24px;overflow:hidden;">
+
+          <!-- Brand Header -->
+          <tr>
+            <td style="background-color:#0f172a;padding:40px;color:#ffffff;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="left" style="font-weight:800;font-size:20px;letter-spacing:-1px;">
+                    PH<span style="color:#10b981;">HEALTHCARE</span>
+                  </td>
+                  <td align="right">
+                    <span style="background:rgba(16,185,129,0.2);color:#10b981;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">
+                      Paid
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Main Content -->
+          <tr>
+            <td style="padding:40px;">
+
+              <h1 style="margin:0 0 8px 0;font-size:24px;font-weight:800;color:#0f172a;">
+                Hi, <%= patientName %>
+              </h1>
+
+              <p style="margin:0 0 32px 0;font-size:14px;color:#64748b;">
+                Thank you for choosing PH Healthcare. Your payment has been successfully reconciled.
+              </p>
+
+              <!-- Meta Grid -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:40px;">
+                <tr>
+                  <td width="48%" style="padding:16px;background:#f8fafc;border-radius:16px;border:1px solid #e2e8f0;">
+                    <p style="margin:0 0 4px 0;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;">
+                      Invoice Ref
+                    </p>
+                    <p style="margin:0;font-size:13px;font-weight:600;color:#0f172a;">
+                      #<%= invoiceId %>
+                    </p>
+                  </td>
+
+                  <td width="4%"></td>
+
+                  <td width="48%" style="padding:16px;background:#f8fafc;border-radius:16px;border:1px solid #e2e8f0;">
+                    <p style="margin:0 0 4px 0;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;">
+                      Payment Date
+                    </p>
+                    <p style="margin:0;font-size:13px;font-weight:600;color:#0f172a;">
+                      <%= paymentDate %>
+                    </p>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td colspan="3" style="padding-top:16px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding:16px;background:#f8fafc;border-radius:16px;border:1px solid #e2e8f0;">
+                          <p style="margin:0 0 4px 0;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;">
+                            Transaction Hash
+                          </p>
+                          <p style="margin:0;font-size:11px;font-family:Courier New,monospace;color:#0f172a;">
+                            <%= transactionId %>
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Service Section -->
+              <p style="margin:0 0 16px 0;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#4f46e5;">
+                Service Details
+              </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="border-bottom:1px solid #f1f5f9;padding-bottom:12px;margin-bottom:20px;">
+                <tr>
+                  <td align="left" style="vertical-align:top;">
+                    <p style="margin:0;font-weight:700;font-size:14px;">
+                      Medical Consultation
+                    </p>
+                    <p style="margin:4px 0 0 0;font-size:12px;color:#64748b;">
+                      Practitioner: Dr. <%= doctorName %>
+                    </p>
+                    <p style="margin:2px 0 0 0;font-size:12px;color:#64748b;">
+                      Schedule: <%= appointmentDate %>
+                    </p>
+                  </td>
+
+                  <td align="right" style="vertical-align:top;font-weight:700;color:#0f172a;">
+                    <%= amount.toFixed(2) %> BDT
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Grand Total -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:32px;">
+                <tr>
+                  <td align="center" style="padding:24px;background:#0f172a;border-radius:20px;color:#ffffff;">
+                    <p style="margin:0 0 4px 0;font-size:12px;font-weight:600;opacity:0.7;">
+                      Amount Reconciled
+                    </p>
+                    <p style="margin:0;font-size:32px;font-weight:800;">
+                      <%= amount.toFixed(2) %> BDT
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:40px;background:#f8fafc;text-align:center;">
+
+              <% if (invoiceUrl) { %>
+                <a href="<%= invoiceUrl %>"
+                   style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:16px 32px;border-radius:14px;font-weight:700;font-size:14px;">
+                  Download PDF Receipt
+                </a>
+              <% } %>
+
+              <p style="margin:32px 0 0 0;font-size:11px;color:#64748b;">
+                © 2026 PH Healthcare Systems. All rights reserved.
+              </p>
+              <p style="margin:4px 0 0 0;font-size:11px;color:#64748b;">
+                This is a system-generated document and does not require a physical signature.
+              </p>
+
+            </td>
+          </tr>
+
+        </table>
+        <!-- End Main Card -->
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

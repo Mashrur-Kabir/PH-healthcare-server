@@ -22,7 +22,6 @@ model Appointment {
     review          Review?
     prescription    Prescription?
     doctorSchedules DoctorSchedules[]
-    medicalReport   MedicalReport?
 
     @@index([patientId], name: "idx_appointment_patientId")
     @@index([doctorId], name: "idx_appointment_doctorId")

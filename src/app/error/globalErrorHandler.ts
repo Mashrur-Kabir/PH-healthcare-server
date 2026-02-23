@@ -6,7 +6,7 @@ import { AppError } from "./AppError";
 import { ZodError } from "zod";
 import { IErrorResponse, IErrorSources } from "../interfaces/error.interface";
 import { handleZodError } from "./zodError";
-import { deleteFileFromCloudinary } from "../../config/cloudinary.config";
+import { deleteUploadedFilesFromGlobalErrorHandler } from "../utils/deleteUploadedFilesFromGEH";
 
 const globalErrorHandler: ErrorRequestHandler = async (
   err: unknown,
@@ -18,17 +18,7 @@ const globalErrorHandler: ErrorRequestHandler = async (
    * --- CLEANUP LOGIC ---
    * If an error occurs, check if a file was uploaded and delete it
    */
-  if (req.file && req.file.path) {
-    await deleteFileFromCloudinary(req.file.path);
-  }
-
-  // Handle multiple files if you use upload.array() or upload.fields()
-  if (req.files && Array.isArray(req.files) && req.files.length > 0) {
-    const filePaths = (req.files as Express.Multer.File[]).map(
-      (file) => file.path,
-    );
-    await Promise.all(filePaths.map((path) => deleteFileFromCloudinary(path)));
-  }
+  await deleteUploadedFilesFromGlobalErrorHandler(req);
 
   // Explicitly set type to number to avoid literal type inference
   let statusCode: number = status.INTERNAL_SERVER_ERROR;

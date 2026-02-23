@@ -34,27 +34,38 @@ const bookAppointmentInDB = async (
     },
   });
 
-  const doctorSchedule = await prisma.doctorSchedules.findUniqueOrThrow({
-    where: {
-      doctorId_scheduleId: {
-        doctorId: doctorData.id,
-        scheduleId: scheduleData.id,
-      },
-    },
-  });
-
   const videoCallingId = String(uuidv7());
 
   const result = await prisma.$transaction(async (tx) => {
+    // 1. Fetch the specific doctor schedule WITHIN the transaction
+    const doctorSchedule = await tx.doctorSchedules.findUniqueOrThrow({
+      where: {
+        doctorId_scheduleId: {
+          doctorId: doctorData.id,
+          scheduleId: scheduleData.id,
+        },
+      },
+    });
+
+    // 2. THE GUARD CLAUSE: Explicitly check availability before creating anything
+    if (doctorSchedule.isBooked) {
+      throw new AppError(
+        status.CONFLICT,
+        "This appointment slot has already been booked by another patient.",
+      );
+    }
+
+    // 3. Create Appointment
     const appointmentData = await tx.appointment.create({
       data: {
         doctorId: payload.doctorId,
         patientId: patientData.id,
-        scheduleId: doctorSchedule.scheduleId,
+        scheduleId: payload.scheduleId,
         videoCallingId,
       },
     });
 
+    // 4. Update the schedule status immediately
     await tx.doctorSchedules.update({
       where: {
         doctorId_scheduleId: {
@@ -67,10 +78,9 @@ const bookAppointmentInDB = async (
       },
     });
 
-    //TODO : Payment Integration will be here
-
     const transactionId = String(uuidv7());
 
+    // 5. Create Payment record
     const paymentData = await tx.payment.create({
       data: {
         appointmentId: appointmentData.id,
@@ -79,6 +89,7 @@ const bookAppointmentInDB = async (
       },
     });
 
+    // 6. Generate Stripe Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
@@ -98,10 +109,7 @@ const bookAppointmentInDB = async (
         appointmentId: appointmentData.id,
         paymentId: paymentData.id,
       },
-
       success_url: `${envVars.FRONTEND_URL}/dashboard/payment/payment-success`,
-
-      // cancel_url: `${envVars.FRONTEND_URL}/dashboard/payment/payment-failed`,
       cancel_url: `${envVars.FRONTEND_URL}/dashboard/appointments`,
     });
 
