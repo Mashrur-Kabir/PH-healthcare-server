@@ -1,139 +1,108 @@
-# Warhammer 40,000 Narrative Guide
+# PH Healthcare - Medical Information System
 
-## Phase 1: The Initial Trilogy
-
-These three books are non-negotiable and set the stage for the entire galactic civil war.
-
-- **Horus Rising** by Dan Abnett
-- **False Gods** by Graham McNeill
-- **Galaxy in Flames** by Ben Counter
+PH Healthcare is a comprehensive backend infrastructure designed for medical facilities. It manages a multi-tier ecosystem including Doctors, Patients, Admins, Specialties, and Appointments. Built with a focus on scalability and type-safety, it leverages a sophisticated query engine and cloud-based asset management.
 
 ---
 
-## Phase 2: The Main Horus Heresy Series (Books 4–54)
+## 🏗 System Architecture
 
-Following the initial trilogy, the series expands to cover various legions and conflicts across the galaxy. The official numbered order for the remaining books is as follows:
+The project follows a modular architecture, ensuring that each domain (Users, Doctors, Appointments, etc.) is isolated yet interoperable.
 
-1. The Flight of the Eisenstein
-2. Fulgrim
-3. Descent of Angels
-4. Legion
-5. Battle for the Abyss
-6. Mechanicum
-7. Tales of Heresy (Anthology)
-8. Fallen Angels
-9. A Thousand Sons
-10. Nemesis
-11. The First Heretic
-12. Prospero Burns
-13. Age of Darkness (Anthology)
-14. The Outcast Dead
-15. Deliverance Lost
-16. Know No Fear
-17. The Primarchs (Novellas)
-18. Fear to Tread
-19. Shadows of Treachery (Anthology)
-20. Angel Exterminatus
-21. Betrayer
-22. Mark of Calth (Anthology)
-23. Vulkan Lives
-24. The Unremembered Empire
-25. Scars
-26. Vengeful Spirit
-27. The Damnation of Pythos
-28. Legacies of Betrayal (Anthology)
-29. Deathfire
-30. War Without End (Anthology)
-31. Pharos
-32. Eye of Terra (Anthology)
-33. The Path of Heaven
-34. The Silent War (Anthology)
-35. Angels of Caliban
-36. Praetorian of Dorn
-37. Corax (Anthology)
-38. The Master of Mankind
-39. Garro (Anthology)
-40. Shattered Legions (Anthology)
-41. The Crimson King
-42. Tallarn (Anthology)
-43. Ruinstorm
-44. Old Earth
-45. The Burden of Loyalty (Anthology)
-46. Wolfsbane
-47. Born of Flame (Anthology)
-48. Slaves to Darkness
-49. Heralds of the Siege (Anthology)
-50. Titandeath
-51. The Buried Dagger
+- **API Layer:** Express.js with TypeScript for robust routing and type-safe controllers.
+- **Database:** PostgreSQL managed via Prisma ORM for relational data integrity.
+- **Query Engine:** Custom `QueryBuilder` for advanced searching, multi-level nested filtering, and dynamic pagination.
+- **File Management:** Integrated Cloudinary storage with automated categorization (Images, Documents, PDFs).
+- **Authentication:** Multi-role JWT-based security (Super Admin, Admin, Doctor, Patient).
 
 ---
 
-## Phase 3: The Siege of Terra (Final Arc)
+## 🚀 Core Features
 
-This concluding series details the final battle for the Throneworld.
+### 🔍 Advanced Search & Filtering
 
-- **The Solar War**
-- **The Lost and the Damned**
-- **The First Wall**
-- **Saturnine**
-- **Mortis**
-- **Warhawk**
-- **Echoes of Eternity**
-- **The End and the Death: Volume I**
-- **The End and the Death: Volume II**
-- **The End and the Death: Volume III** (Released 2024)
+The backend implements a proprietary `QueryBuilder` class that allows for:
 
-### Additional Content
+- **Deep Nested Search:** Search through relations (e.g., finding a Doctor by their User's email).
+- **Flexible Filtering:** Range-based queries (e.g., appointment fees between $50-$100) and multi-select filters.
+- **Dynamic Sorting:** Order results by any field or nested relation field.
 
-An anthology titled **Era of Ruin**, released in early 2025, collects side-stories from this period.
+### 📁 Intelligent Asset Management
 
----
+All file uploads are handled through a custom middleware pipeline:
 
-# Beyond the Heresy: Following the Timeline
+- **Buffer Streaming:** Files are streamed directly to Cloudinary, reducing server memory load.
+- **Auto-Categorization:** Logic automatically sorts uploads into `/images`, `/pdfs`, or `/documents` folders.
+- **Sanitization:** Filenames are automatically cleaned and timestamped to prevent URL breakages and collisions.
 
-After finishing the Siege of Terra, the chronological timeline of Warhammer 40k becomes less of a single "straight line" and more of a massive web of stories. However, if you want to follow the narrative progression of the galaxy as it moves toward the "current" year (the 41st Millennium), follow this path:
+### 🩺 Healthcare Specific Workflows
 
-## Phase 1: The Immediate Aftermath (M31–M32)
-
-These books cover the period when the remaining Primarchs tried to hold the Imperium together after the Emperor was placed on the Golden Throne.
-
-- **The Scouring (New Anthology): Era of Ruin (Released 2025).** This anthology features stories set directly after the Siege, showing the characters' immediate reactions to the war's end.
-- **Rise of the Black Legion:** Read _The Talon of Horus_ and _Black Legion_ by Aaron Dembski-Bowden. These follow Abaddon the Despoiler as he unites the survivors of the civil war inside the Eye of Terror.
-- **The Beast Arises Series:** A 12-book series set 1,500 years after the Heresy. It is the next "major" galactic event, featuring a massive Ork invasion that nearly destroys Terra.
-- Books 1–12 (Starting with "I Am Slaughter")
-
-## Phase 2: The "Classic" 40k Era (M41)
-
-There is a 7,000-year gap where most stories are standalone. To see the galaxy just before the timeline starts moving again, read these "Essential" series:
-
-- **Eisenhorn Trilogy:** (_Xenos_, _Malleus_, _Hereticus_) – The best look at how the Inquisition and the average Imperial citizen live.
-- **Gaunt's Ghosts:** (Starting with _First and Only_) – Follows a regiment of soldiers through a massive multi-decade crusade.
-
-## Phase 3: The "Modern" Era (The Era Indomitus)
-
-Around the year 999.M41, the "current" timeline officially restarted with major world-changing events. Follow these in order to stay current with 2025 lore:
-
-- **The Fall of Cadia:** Read _The Fall of Cadia_ by Robert Rath. This depicts the destruction of the fortress world and the literal splitting of the galaxy in half.
-- **The Return of a Primarch:** _Lion: Son of the Forest_ (for the return of the Dark Angels' Primarch) and _The Great Work_ (focusing on Belisarius Cawl and the new Primaris Marines).
-- **Dawn of Fire Series:** This is the current "mainline" series (similar to Horus Heresy) that chronicles the new crusade to retake the galaxy.
-- Book 1: Avenging Son
-- Book 2: The Gate of Bones
-- Book 3: The Wolftime (and continuing through Book 8+)
-
-- **The Dark Imperium Trilogy:** Set toward the later stages of the current crusade.
-- Dark Imperium
-- Plague War
-- Godblight
+- **Doctor Profiles:** Management of specialties, qualifications, and consultation fees.
+- **Appointment Lifecycle:** Booking, payment status tracking, and scheduling logic.
+- **Administrative Control:** Dedicated panels for managing medical specialties and user roles.
 
 ---
 
-## Summary of the "Big" Linear Jumps:
+## 🛠 Tech Stack
 
-- **31st Millennium:** Horus Heresy & Siege of Terra (Origins)
-- **32nd Millennium:** The Beast Arises (The first Great Ork War)
-- **41st Millennium:** Eisenhorn & Gaunt's Ghosts (The "Status Quo" years)
-- **42nd Millennium:** Dawn of Fire & Dark Imperium (The Modern Timeline)
+| Technology            | Purpose                                                             |
+| --------------------- | ------------------------------------------------------------------- |
+| **TypeScript**        | Primary language for type-safety and developer productivity         |
+| **Node.js / Express** | Runtime environment and web framework                               |
+| **Prisma**            | Modern ORM for database schema management and type-safe queries     |
+| **PostgreSQL**        | Relational database for structured healthcare data                  |
+| **Cloudinary**        | Cloud-based media management for medical reports and profile images |
+| **Multer**            | Middleware for handling `multipart/form-data`                       |
+| **Zod**               | Schema-based validation for request bodies                          |
 
 ---
 
-Would you like me to create a checklist version of this list so you can track your reading progress?
+## ⚙️ Configuration
+
+To run this project locally, create a `.env` file in the root directory and provide the following variables:
+
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/ph_healthcare"
+PORT=5000
+
+# Cloudinary Config
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
+# JWT Secrets
+JWT_ACCESS_SECRET=your_access_secret
+JWT_REFRESH_SECRET=your_refresh_secret
+
+```
+
+---
+
+## 🏃 Getting Started
+
+1. **Clone the repository:**
+
+```bash
+git clone https://github.com/your-repo/ph-healthcare-server.git
+
+```
+
+2. **Install dependencies:**
+
+```bash
+npm install
+
+```
+
+3. **Run Prisma Migrations:**
+
+```bash
+npx prisma migrate dev
+
+```
+
+4. **Start the development server:**
+
+```bash
+npm run dev
+
+```
